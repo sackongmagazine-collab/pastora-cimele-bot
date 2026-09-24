@@ -301,10 +301,31 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     else:
         logger.error(f"Erro: {context.error}")
 
+# ==================== HTTP HEALTH CHECK (Render Web Service free tier) ====================
+def start_health_server():
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    import threading
+
+    class HealthHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+
+        def log_message(self, *args):
+            pass
+
+    port = int(os.getenv("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    logger.info(f"Health check server rodando na porta {port}")
+
 # ==================== MAIN ====================
 if __name__ == "__main__":
     import time
     time.sleep(4)  # aguarda conexoes antigas expirarem
+
+    start_health_server()
 
     persistence = PicklePersistence(filepath=BASE_DIR / "bot_state.pickle")
     app = ApplicationBuilder().token(TOKEN).persistence(persistence).build()
