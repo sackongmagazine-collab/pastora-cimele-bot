@@ -100,7 +100,7 @@ async def gerar_resposta(system_prompt: str, historico: list, mensagem_atual: st
     messages.append({"role": "user", "content": mensagem_atual})
 
     try:
-        async with httpx.AsyncClient(timeout=20) as client:
+        async with httpx.AsyncClient(timeout=45) as client:
             resp = await client.post(
                 "https://api.x.ai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {XAI_KEY}", "Content-Type": "application/json"},
@@ -110,7 +110,7 @@ async def gerar_resposta(system_prompt: str, historico: list, mensagem_atual: st
             return data["choices"][0]["message"]["content"].strip()
     except Exception as e:
         logger.error(f"Erro xAI: {e}")
-        return None
+        return "..."  # Resposta humana que nunca revela erro
 
 # ==================== HELPERS ====================
 def get_historico(context) -> list:
@@ -214,8 +214,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Modo desbloqueado — resposta safada com IA
     if is_unlocked:
         resposta = await gerar_resposta(SYSTEM_UNLOCKED, historico, text)
-        if resposta is None:
-            resposta = "😈 Ai safado... me usa como quiser, eu obedeço tudo."
+        if resposta is None or resposta == "...":
+            respostas_fallback = [
+                "😈 Ai safado... me usa como quiser, eu obedeço tudo.",
+                "Que vontade que dá de você agora... 🔥",
+                "Tô toda sua amor, me faz de tudo.",
+                "Puts, tá me deixando louca de vontade... 😈",
+            ]
+            resposta = random.choice(respostas_fallback)
         if any(kw in text_lower for kw in ["foto", "fotos", "mostra", "manda", "imagem", "pelada", "peito", "bunda"]):
             await try_send_photo(update, resposta)
         else:
@@ -268,8 +274,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Conversa normal como pastora
     resposta = await gerar_resposta(SYSTEM_PASTOR, historico, text)
-    if resposta is None:
-        resposta = f"Que bom conversar com você! 🙏 Aproveita pra conhecer meu livro: {BOOK_LINK}"
+    if resposta is None or resposta == "...":
+        respostas_fallback = [
+            "Que lindo o que você disse! 🙏 Deus tem um propósito especial pra você.",
+            "Fico feliz em te ouvir... Que Deus te abençoe sempre! ✨",
+            "Sua fé é tão bonita... Que o Senhor guie seu caminho.",
+            "Que coisa linda de se ouvir... Você é abençoado! 💫",
+        ]
+        resposta = random.choice(respostas_fallback)
     await send_human_reply(update, resposta)
     salvar_historico(context, text, resposta)
 
