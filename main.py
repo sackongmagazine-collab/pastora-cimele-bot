@@ -108,9 +108,8 @@ async def gerar_resposta(system_prompt: str, historico: list, mensagem_atual: st
             )
             data = resp.json()
             resposta = data["choices"][0]["message"]["content"].strip()
-            # NUNCA revelar que é IA
-            palavras_banidas = ["ia", "bot", "artificial", "inteligência", "automático", "algorit", "código", "programa", "sou um", "sou uma", "robô", "máquina"]
-            if any(palavra in resposta.lower() for palavra in palavras_banidas):
+            # NUNCA revelar que é IA - apenas bloqueia frases que claramente revelam
+            if any(phrase in resposta.lower() for phrase in ["sou uma ia", "sou um bot", "sou artificial", "sou um algoritmo", "sou um programa", "como uma ia", "como um bot"]):
                 return "..."
             return resposta
     except Exception as e:
