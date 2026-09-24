@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.local
+*.log
+bot.pickle
+bot_state.pickle
+unlocked_users.json
+.DS_Store
+venv/
+*.egg-info/
+dist/
+build/
+.idea/
+.vscode/
