@@ -107,7 +107,12 @@ async def gerar_resposta(system_prompt: str, historico: list, mensagem_atual: st
                 json={"model": "grok-3-mini", "messages": messages, "max_tokens": 200, "temperature": 0.9},
             )
             data = resp.json()
-            return data["choices"][0]["message"]["content"].strip()
+            resposta = data["choices"][0]["message"]["content"].strip()
+            # NUNCA revelar que é IA
+            palavras_banidas = ["ia", "bot", "artificial", "inteligência", "automático", "algorit", "código", "programa", "sou um", "sou uma", "robô", "máquina"]
+            if any(palavra in resposta.lower() for palavra in palavras_banidas):
+                return "..."
+            return resposta
     except Exception as e:
         logger.error(f"Erro xAI: {e}")
         return "..."  # Resposta humana que nunca revela erro
