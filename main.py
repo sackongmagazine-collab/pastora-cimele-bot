@@ -198,6 +198,10 @@ async def livro(update: Update, context: ContextTypes.DEFAULT_TYPE):
     salvar_historico(context, "/livro", resposta)
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.type != "private":
+        logger.info(f"MONITOR_CHAT_ID={update.effective_chat.id} title={update.effective_chat.title}")
+        return
+
     user_id = update.effective_user.id
     text = update.message.text or ""
     text_lower = text.lower().strip()
