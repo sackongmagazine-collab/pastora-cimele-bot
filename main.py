@@ -39,6 +39,8 @@ FOTOS_DIR = BASE_DIR / "fotos"
 UNLOCKED_FILE = BASE_DIR / "unlocked_users.json"
 FOTOS_DIR.mkdir(exist_ok=True)
 
+MONITOR_CHAT_ID = -5548307594
+
 MAGIC_CODE = "d469"
 BOOK_LINK = "https://go.hotmart.com/B104520668F"
 BOOK_TITLE = "Libertação da Culpa e do Conflito Espiritual"
@@ -125,6 +127,15 @@ def salvar_historico(context, user_msg: str, bot_msg: str):
     h.append({"role": "user", "content": user_msg})
     h.append({"role": "assistant", "content": bot_msg})
     context.user_data["historico"] = h[-20:]  # mantém últimas 20 mensagens
+
+async def mirror_to_monitor(context, update: Update, user_msg: str, bot_msg: str):
+    try:
+        user = update.effective_user
+        nome = user.first_name or user.username or str(user.id)
+        texto = f"👤 {nome} (id {user.id}):\n{user_msg}\n\n🤖 Pastora:\n{bot_msg}"
+        await context.bot.send_message(chat_id=MONITOR_CHAT_ID, text=texto)
+    except Exception as e:
+        logger.error(f"Erro ao espelhar conversa: {e}")
 
 async def send_human_reply(update: Update, text: str):
     delay = min(2.0 + len(text) * 0.03, 8.0)  # delay proporcional ao tamanho
@@ -217,6 +228,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_human_reply(update, resposta)
         await try_send_photo(update, "Primeira foto liberada... tô peladinha só pra você 😈")
         salvar_historico(context, text, resposta)
+        await mirror_to_monitor(context, update, text, resposta)
         return
 
     # Modo desbloqueado — resposta safada com IA
@@ -235,6 +247,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await send_human_reply(update, resposta)
         salvar_historico(context, text, resposta)
+        await mirror_to_monitor(context, update, text, resposta)
         return
 
     # Pessoa disse que já leu → pede o código
@@ -248,6 +261,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ) or "Que incrível que você leu! 🥰 Então você viu o código secreto na última página, né? Me manda aqui!"
         await send_human_reply(update, resposta)
         salvar_historico(context, text, resposta)
+        await mirror_to_monitor(context, update, text, resposta)
         return
 
     sexual_count = context.user_data.get("sexual_count", 0)
@@ -270,6 +284,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 resposta = f"Tá bom... tenho um segredo. Na última página do meu livro tem um código especial. Quem me manda, descobre outro lado meu: {BOOK_LINK}"
         await send_human_reply(update, resposta)
         salvar_historico(context, text, resposta)
+        await mirror_to_monitor(context, update, text, resposta)
         return
 
     # Esperando código mas mandou outra coisa
@@ -278,6 +293,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             or "Hmm, não é esse não... 🤔 O código está bem no final da última página do livro!"
         await send_human_reply(update, resposta)
         salvar_historico(context, text, resposta)
+        await mirror_to_monitor(context, update, text, resposta)
         return
 
     # Conversa normal como pastora
@@ -292,6 +308,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         resposta = random.choice(respostas_fallback)
     await send_human_reply(update, resposta)
     salvar_historico(context, text, resposta)
+    await mirror_to_monitor(context, update, text, resposta)
 
 # ==================== ERROR HANDLER ====================
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
